@@ -25,30 +25,21 @@ repositories {
 }
 
 dependencies {
+    compileOnly 'org.projectlombok:lombok'
+    implementation 'org.springframework.boot:spring-boot-starter'
+    compile 'org.springframework.boot:spring-boot-starter-webflux'
+    compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
     compile group: 'origami', name: 'origami', version: '4.2.0-1'
     compile group: 'origami', name: 'filters', version: '1.4'
     compile group: 'origami', name: 'optimized-image-enhanced', version: '1.0'
     compile group: 'info.picocli', name: 'picocli', version: '4.1.0'
-
-    implementation 'org.springframework.boot:spring-boot-starter'
-    compileOnly 'org.projectlombok:lombok'
+    compile group: 'io.github.vzhn', name: 'netty-http-authenticator', version: '1.1'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
-    }
-
-    // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-    compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
-
-
-    compile("org.springframework.boot:spring-boot-starter-security"){
-        exclude module: "spring-boot-starter-logging"
-        exclude module: "logback-classic"
-    }
-    compile("org.springframework.boot:spring-boot-starter-thymeleaf"){
-        exclude module: "logback-classic"
     }
 }
 

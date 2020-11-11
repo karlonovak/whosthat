@@ -1,4 +1,4 @@
-package hr.kn.whosthat;
+package hr.kn.whosthat.camera.detection;
 
 import org.opencv.core.Mat;
 
