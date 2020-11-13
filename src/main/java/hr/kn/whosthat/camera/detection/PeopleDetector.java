@@ -10,6 +10,8 @@ import org.opencv.objdetect.HOGDescriptor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.util.Arrays;
+
 @Service
 public class PeopleDetector {
 
@@ -31,7 +33,7 @@ public class PeopleDetector {
 //            Imgcodecs.imwrite("/home/knovak/Pictures/opencv/cropped.jpg", cropped);
 
             hog.detectMultiScale(cropped, locations, weights);
-            if (locations.rows() > 0) {
+            if (locations.rows() > 0 && preciseWeightFound(weights)) {
                 var locationsArray = locations.toArray();
                 for (Rect rect : locationsArray) {
                     Imgproc.rectangle(cropped, rect.tl(), rect.br(), new Scalar(0, 255, 0, 255), 3);
@@ -41,5 +43,12 @@ public class PeopleDetector {
                 return PeopleDetectionResult.notDetected();
             }
         });
+    }
+
+    private boolean preciseWeightFound(MatOfDouble weights) {
+        return Arrays.stream(weights.toArray())
+                .filter(weight -> weight > 0.8)
+                .findAny()
+                .isPresent();
     }
 }

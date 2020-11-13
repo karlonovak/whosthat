@@ -27,6 +27,7 @@ repositories {
 dependencies {
     compileOnly 'org.projectlombok:lombok'
     implementation 'org.springframework.boot:spring-boot-starter'
+    compile group: 'com.github.pengrad', name: 'java-telegram-bot-api', version: '5.0.0'
     compile 'org.springframework.boot:spring-boot-starter-webflux'
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
     compile group: 'origami', name: 'origami', version: '4.2.0-1'
