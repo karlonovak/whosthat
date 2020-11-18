@@ -5,24 +5,34 @@ import com.pengrad.telegrambot.request.SendPhoto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-
 @Service
 public class TelegramService {
 
     @Value("${telegram.token}")
     private String telegramToken;
 
+    @Value("${telegram.chatId}")
+    private Integer chatId;
+
     private final TelegramBot telegramBot;
+
+    private long lastNotificationTime = System.currentTimeMillis();
 
     public TelegramService() {
         this.telegramBot = new TelegramBot(telegramToken);
     }
 
-    public void sendPhoto(String photoPath, String caption) {
-        var file = new File(photoPath);
-        var sendPhotoRequest = new SendPhoto(-321238055, file).caption(caption);
-        telegramBot.execute(sendPhotoRequest);
+    public void sendPhoto(byte[] photo, String caption) {
+        if (minutePassedSinceLastNotification()) {
+            var sendPhotoRequest = new SendPhoto(chatId, photo).caption(caption);
+            telegramBot.execute(sendPhotoRequest);
+            lastNotificationTime = System.currentTimeMillis();
+        }
+    }
+
+    // Don't send notification more than once a minute.
+    private boolean minutePassedSinceLastNotification() {
+        return System.currentTimeMillis() - lastNotificationTime > 60_000;
     }
 
 }

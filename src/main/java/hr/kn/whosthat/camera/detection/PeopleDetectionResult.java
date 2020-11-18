@@ -1,19 +1,17 @@
 package hr.kn.whosthat.camera.detection;
 
-import org.opencv.core.Mat;
-
 public class PeopleDetectionResult {
 
     private boolean peopleDetected;
-    private Mat image;
+    private byte[] image;
 
     private PeopleDetectionResult() {
     }
 
-    public static PeopleDetectionResult detected(Mat detectedImage) {
+    public static PeopleDetectionResult detected(byte[] photo) {
         var result = new PeopleDetectionResult();
         result.peopleDetected = true;
-        result.image = detectedImage;
+        result.image = photo;
         return result;
     }
 
@@ -27,7 +25,7 @@ public class PeopleDetectionResult {
         return peopleDetected;
     }
 
-    public Mat getImage() {
+    public byte[] getImage() {
         return image;
     }
 }

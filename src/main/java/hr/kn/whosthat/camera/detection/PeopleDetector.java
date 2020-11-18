@@ -1,9 +1,6 @@
 package hr.kn.whosthat.camera.detection;
 
-import org.opencv.core.MatOfDouble;
-import org.opencv.core.MatOfRect;
-import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
+import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.HOGDescriptor;
@@ -21,24 +18,20 @@ public class PeopleDetector {
         hog.setSVMDetector(HOGDescriptor.getDefaultPeopleDetector());
     }
 
-    public Mono<PeopleDetectionResult> detectPeople(String imagePath) {
+    public Mono<PeopleDetectionResult> detectPeople(byte[] photo) {
         return Mono.fromCallable(() -> {
+            var mat = Imgcodecs.imdecode(new MatOfByte(photo), Imgcodecs.IMREAD_COLOR);
             var locations = new MatOfRect();
             var weights = new MatOfDouble();
-            var img = Imgcodecs.imread(imagePath);
 
-//            var roi = new Rect(207, 15, 728, 926);
-            var cropped = img;
-//            var cropped = new Mat(img, roi);
-//            Imgcodecs.imwrite("/home/knovak/Pictures/opencv/cropped.jpg", cropped);
+            hog.detectMultiScale(mat, locations, weights);
 
-            hog.detectMultiScale(cropped, locations, weights);
             if (locations.rows() > 0 && preciseWeightFound(weights)) {
                 var locationsArray = locations.toArray();
                 for (Rect rect : locationsArray) {
-                    Imgproc.rectangle(cropped, rect.tl(), rect.br(), new Scalar(0, 255, 0, 255), 3);
+                    Imgproc.rectangle(mat, rect.tl(), rect.br(), new Scalar(0, 255, 0, 255), 3);
                 }
-                return PeopleDetectionResult.detected(cropped);
+                return PeopleDetectionResult.detected(photo);
             } else {
                 return PeopleDetectionResult.notDetected();
             }
@@ -51,4 +44,5 @@ public class PeopleDetector {
                 .findAny()
                 .isPresent();
     }
+
 }
