@@ -7,7 +7,7 @@ import reactor.core.publisher.Mono;
 @Service
 public class CameraCommunicator {
 
-    private final String CAMERA_URL = "http://192.168.1.4/ISAPI/Streaming/channels/0201/picture";
+    private final String CAMERA_URL = "http://192.168.6.20:65002/ISAPI/Streaming/channels/101/picture";
 
     private final WebClient cameraHttpClient;
 

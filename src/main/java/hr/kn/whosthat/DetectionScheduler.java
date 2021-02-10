@@ -24,11 +24,11 @@ public class DetectionScheduler {
         this.telegramService = telegramService;
     }
 
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(fixedDelay = 3000)
     public void contextStartedListener() {
         cameraCommunicator
                 .acquireCameraPhoto()
-                .doOnError(System.out::println)
+                .doOnError(Throwable::printStackTrace)
                 .subscribe(photo -> peopleDetector
                         .detectPeople(photo)
                         .filter(PeopleDetectionResult::arePeopleDetected)
