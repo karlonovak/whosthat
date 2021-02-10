@@ -3,6 +3,8 @@ package hr.kn.whosthat.camera.detection;
 import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -14,11 +16,13 @@ import java.util.List;
 @Service
 public class PeopleDetectorMotion implements PeopleDetector {
 
-    Mat frame = new Mat();
-    Mat lastFrame = new Mat();
-    Mat gray = new Mat();
-    Mat frameDelta = new Mat();
-    Mat thresh = new Mat();
+    private final Logger logger = LoggerFactory.getLogger(PeopleDetectorMotion.class);
+
+    private Mat frame = new Mat();
+    private Mat lastFrame = new Mat();
+    private Mat gray = new Mat();
+    private Mat frameDelta = new Mat();
+    private Mat thresh = new Mat();
 
     private Integer curr = 0;
 
@@ -26,11 +30,11 @@ public class PeopleDetectorMotion implements PeopleDetector {
     public Mono<PeopleDetectionResult> detectPeople(byte[] photo) {
         return Mono.fromCallable(() -> {
             frame = Imgcodecs.imdecode(new MatOfByte(photo), Imgcodecs.IMREAD_COLOR);
-            var roi = new Rect(440, 336, 1400, 1100);
+            var roi = new Rect(1530, 500, 300, 450);
             var cropped = new Mat(frame, roi);
             Imgcodecs.imwrite("/home/knovak/Pictures/opencv/last.jpg", cropped);
 
-            if(curr == 0) {
+            if (curr == 0) {
                 Imgproc.cvtColor(cropped, lastFrame, Imgproc.COLOR_BGR2GRAY);
                 Imgproc.GaussianBlur(lastFrame, lastFrame, new Size(21, 21), 0);
                 curr++;
@@ -49,22 +53,20 @@ public class PeopleDetectorMotion implements PeopleDetector {
             Imgproc.dilate(thresh, thresh, new Mat(), new Point(-1, -1), 2);
             Imgproc.findContours(thresh, cnts, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
-            for(int i=0; i < cnts.size(); i++) {
-                if(Imgproc.contourArea(cnts.get(i)) < 500) {
+            for (MatOfPoint cnt : cnts) {
+                if (Imgproc.contourArea(cnt) < 500) {
                     continue;
                 }
 
                 Imgcodecs.imwrite("/home/knovak/Pictures/opencv/detect" + curr + ".jpg", cropped);
                 curr++;
-                System.out.println("Motion detected!!!");
-                break;
+                logger.info("Motion detected.");
+                Imgproc.cvtColor(cropped, lastFrame, Imgproc.COLOR_BGR2GRAY);
+                Imgproc.GaussianBlur(lastFrame, lastFrame, new Size(21, 21), 0);
+                return PeopleDetectionResult.detected(photo);
             }
 
-            Imgproc.cvtColor(cropped, lastFrame, Imgproc.COLOR_BGR2GRAY);
-            Imgproc.GaussianBlur(lastFrame, lastFrame, new Size(21, 21), 0);
-
             return PeopleDetectionResult.notDetected();
-//            return PeopleDetectionResult.detected(buffer);
         });
     }
 
