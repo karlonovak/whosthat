@@ -16,6 +16,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,11 +36,11 @@ public class DetectionScheduler {
 
     public DetectionScheduler(CameraCommunicator cameraCommunicator,
                               TelegramService telegramService,
-                              PeopleDetector peopleDetector) {
+                              PeopleDetector peopleDetector) throws IOException {
         this.cameraCommunicator = cameraCommunicator;
         this.telegramService = telegramService;
         this.peopleDetector = peopleDetector;
-//        startDetector();
+        startDarknetDetector();
     }
 
     public void startHikvisionMotionDetector() {
@@ -68,28 +71,39 @@ public class DetectionScheduler {
         return System.currentTimeMillis() - lastNotificationTime > 60_000;
     }
 
-//    @Scheduled(fixedDelay = 1000)
-    public void startDarknetDetector() {
+    //    @Scheduled(fixedDelay = 1000)
+    public void startDarknetDetector() throws IOException {
         String modelWeights = "/home/knovak/Workspaces/darknet/yolov3.weights"; //Download and load only wights for YOLO , this is obtained from official YOLO site//
         String modelConfiguration = "/home/knovak/Workspaces/darknet/cfg/yolov3.cfg";//Download and load cfg file for YOLO , can be obtained from official site//
         Net net = Dnn.readNetFromDarknet(modelConfiguration, modelWeights);
         List<Mat> result = new ArrayList<>();
         List<String> outBlobNames = getOutputNames(net);
 
-        cameraCommunicator
-                .acquireCameraPhoto()
-                .doOnError(Throwable::printStackTrace)
-                .subscribe(photo -> {
-//                    Mat frame = new Mat();
-                    Mat frame = Imgcodecs.imdecode(new MatOfByte(photo), Imgcodecs.IMREAD_COLOR);
-                    Size sz = new Size(1520,2688);
-                    Mat blob = Dnn.blobFromImage(frame, 0.00392, sz, new Scalar(0), true, false);
-                    net.setInput(blob);
-                    net.forward(result, outBlobNames);
+        var photo = Files.readAllBytes(Paths.get("/home/knovak/Downloads/slika.jpeg"));
+        Mat frame = Imgcodecs.imdecode(new MatOfByte(photo), Imgcodecs.IMREAD_COLOR);
+        Size sz = new Size(2560, 1448);
+//        Mat blob = Dnn.blobFromImage(frame, 0.00392, sz, new Scalar(0), true, false);
+        Mat blob = Dnn.blobFromImage(frame, 1.0 / 255, new Size(416, 416), new Scalar(0), true, false);
 
-                    outBlobNames.forEach(System.out::println);
-                    result.forEach(System.out::println);
-                });
+        net.setInput(blob);
+        net.forward(result, outBlobNames);
+
+        outBlobNames.forEach(System.out::println);
+        result.forEach(System.out::println);
+
+//        cameraCommunicator
+//                .acquireCameraPhoto()
+//                .doOnError(Throwable::printStackTrace)
+//                .subscribe(photo -> {
+//                    Mat frame = Imgcodecs.imdecode(new MatOfByte(photo), Imgcodecs.IMREAD_COLOR);
+//                    Size sz = new Size(1520,2688);
+//                    Mat blob = Dnn.blobFromImage(frame, 0.00392, sz, new Scalar(0), true, false);
+//                    net.setInput(blob);
+//                    net.forward(result, outBlobNames);
+//
+//                    outBlobNames.forEach(System.out::println);
+//                    result.forEach(System.out::println);
+//                });
     }
 
     @Scheduled(fixedDelay = 1000)
