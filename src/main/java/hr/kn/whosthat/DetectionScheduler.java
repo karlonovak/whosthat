@@ -71,7 +71,7 @@ public class DetectionScheduler {
         return System.currentTimeMillis() - lastNotificationTime > 60_000;
     }
 
-    @Scheduled(fixedDelay = 2000)
+    @Scheduled(fixedDelay = 3000)
     public void startDarknetDetector() {
         cameraCommunicator
                 .acquireCameraPhoto()
@@ -81,7 +81,7 @@ public class DetectionScheduler {
                     List<Mat> result = new ArrayList<>();
 
                     Mat frame = Imgcodecs.imdecode(new MatOfByte(photo), Imgcodecs.IMREAD_COLOR);
-                    Mat blob = Dnn.blobFromImage(frame, 0.00392, new Size(416, 416), new Scalar(0), true, false);
+                    Mat blob = Dnn.blobFromImage(frame, 0.00392, new Size(608, 608), new Scalar(0), true, false);
 
                     net.setInput(blob);
                     net.forward(result, outBlobNames);
@@ -119,7 +119,7 @@ public class DetectionScheduler {
                     }
 
                     logger.info("Detection took: " + (System.currentTimeMillis() - start) + " millis");
-                    if (rects.size() > 0) {
+                    if (rects.size() > 0 && clsIds.contains(0)) {
                         logger.info("Person found!");
                         telegramService.sendPhoto(photo, "Somebody's at the door!");
                         float nmsThresh = 0.5f;
@@ -134,8 +134,8 @@ public class DetectionScheduler {
                             int idx = ind[i];
                             Rect box = boxesArray[idx];
                             Imgproc.rectangle(frame, box.tl(), box.br(), new Scalar(0, 0, 255), 2);
-                            Imgcodecs.imwrite("/home/knovak/Pictures/opencv/detect_" + System.currentTimeMillis() + ".jpg", frame);
                         }
+                        Imgcodecs.imwrite("/home/knovak/Pictures/opencv/detect_" + System.currentTimeMillis() + ".jpg", frame);
                     }
                 });
     }
