@@ -89,7 +89,7 @@ public class DetectionScheduler {
 //                    outBlobNames.forEach(System.out::println);
 //                    result.forEach(System.out::println);
 
-                    float confThreshold = 0.6f;
+                    float confThreshold = 0.7f;
                     List<Integer> clsIds = new ArrayList<>();
                     List<Float> confs = new ArrayList<>();
                     List<Rect> rects = new ArrayList<>();
@@ -120,9 +120,11 @@ public class DetectionScheduler {
 
                     logger.info("Detection took: " + (System.currentTimeMillis() - start) + " millis");
                     if (rects.size() > 0 && clsIds.contains(0)) {
+                        var time = System.currentTimeMillis();
+                        Imgcodecs.imwrite("/home/knovak/Pictures/opencv/detectraw_" + time+ ".jpg", frame);
                         logger.info("Person found!");
                         telegramService.sendPhoto(photo, "Somebody's at the door!");
-                        float nmsThresh = 0.5f;
+                        float nmsThresh = 0.7f;
                         MatOfFloat confidences = new MatOfFloat(Converters.vector_float_to_Mat(confs));
                         Rect[] boxesArray = rects.toArray(new Rect[0]);
                         MatOfRect boxes = new MatOfRect(boxesArray);
@@ -131,11 +133,12 @@ public class DetectionScheduler {
 
                         int[] ind = indices.toArray();
                         for (int i = 0; i < ind.length; ++i) {
+                            logger.info("Confidence is " + confs.get(i) + " and class is " + clsIds.get(i));
                             int idx = ind[i];
                             Rect box = boxesArray[idx];
                             Imgproc.rectangle(frame, box.tl(), box.br(), new Scalar(0, 0, 255), 2);
                         }
-                        Imgcodecs.imwrite("/home/knovak/Pictures/opencv/detect_" + System.currentTimeMillis() + ".jpg", frame);
+                        Imgcodecs.imwrite("/home/knovak/Pictures/opencv/detect_" + time + ".jpg", frame);
                     }
                 });
     }
