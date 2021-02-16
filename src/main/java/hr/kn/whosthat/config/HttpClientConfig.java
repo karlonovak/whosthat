@@ -4,9 +4,12 @@ import org.apache.hc.client5.http.auth.AuthScope;
 import org.apache.hc.client5.http.auth.CredentialsProvider;
 import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
 import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
-import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
 import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManager;
+import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder;
+import org.apache.hc.core5.pool.PoolReusePolicy;
+import org.apache.hc.core5.util.TimeValue;
 import org.eclipse.jetty.client.HttpClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -34,22 +37,25 @@ public class HttpClientConfig {
                 .build();
     }
 
-    private HttpClient createJettyClient(String camUser, String camPassword) throws Exception {
-        var httpClient = new HttpClient();
-        var authStore = httpClient.getAuthenticationStore();
-        httpClient.start();
-        return httpClient;
-    }
-
     private CloseableHttpAsyncClient createHttpClientForCamera(String camUser, String camPassword) {
-        CredentialsProvider provider = createCredentialsProvider(camUser, camPassword);
-        HttpAsyncClientBuilder clientBuilder = HttpAsyncClients.custom();
-        return clientBuilder.setDefaultCredentialsProvider(provider).build();
+        var provider = createCredentialsProvider(camUser, camPassword);
+
+        var connectionManager = PoolingAsyncClientConnectionManagerBuilder.create()
+                .setConnPoolPolicy(PoolReusePolicy.LIFO)
+                .setMaxConnTotal(100)
+                .setMaxConnPerRoute(100)
+                .setConnectionTimeToLive(TimeValue.ofDays(10_000L))
+                .build();
+
+        return HttpAsyncClients.custom()
+                .setConnectionManager(connectionManager)
+                .setDefaultCredentialsProvider(provider)
+                .build();
     }
 
     private CredentialsProvider createCredentialsProvider(String camUser, String camPassword) {
-        BasicCredentialsProvider provider = new BasicCredentialsProvider();
-        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(camUser, camPassword.toCharArray());
+        var provider = new BasicCredentialsProvider();
+        var credentials = new UsernamePasswordCredentials(camUser, camPassword.toCharArray());
         provider.setCredentials(new AuthScope("192.168.6.20", 65002), credentials);
         return provider;
     }

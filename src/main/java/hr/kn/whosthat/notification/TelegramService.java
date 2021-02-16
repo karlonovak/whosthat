@@ -23,7 +23,7 @@ public class TelegramService {
         this.telegramBot = new TelegramBot(telegramToken);
     }
 
-    public void sendPhoto(byte[] photo, String caption) {
+    public synchronized void sendPhoto(byte[] photo, String caption) {
         if (minutePassedSinceLastNotification()) {
             logger.info("Notifying user!");
             var sendPhotoRequest = new SendPhoto(chatId, photo).caption(caption);
@@ -34,7 +34,7 @@ public class TelegramService {
 
     // Don't send notification more than once a minute.
     private boolean minutePassedSinceLastNotification() {
-        return System.currentTimeMillis() - lastNotificationTime > 30_000;
+        return System.currentTimeMillis() - lastNotificationTime > 60_000;
     }
 
 }

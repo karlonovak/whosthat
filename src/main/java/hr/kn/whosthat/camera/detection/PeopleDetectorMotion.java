@@ -30,7 +30,7 @@ public class PeopleDetectorMotion implements PeopleDetector {
     public Mono<PeopleDetectionResult> detectPeople(byte[] photo) {
         return Mono.fromCallable(() -> {
             frame = Imgcodecs.imdecode(new MatOfByte(photo), Imgcodecs.IMREAD_COLOR);
-            var roi = new Rect(1530, 500, 300, 450);
+            var roi = new Rect(1000, 15, 920, 1500);
             var cropped = new Mat(frame, roi);
             Imgcodecs.imwrite("/home/knovak/Pictures/opencv/last.jpg", cropped);
 
@@ -48,19 +48,19 @@ public class PeopleDetectorMotion implements PeopleDetector {
             Core.absdiff(lastFrame, gray, frameDelta);
             Imgproc.threshold(frameDelta, thresh, 25, 255, Imgproc.THRESH_BINARY);
 
-
             List<MatOfPoint> cnts = new ArrayList<>();
             Imgproc.dilate(thresh, thresh, new Mat(), new Point(-1, -1), 2);
             Imgproc.findContours(thresh, cnts, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
             for (MatOfPoint cnt : cnts) {
-                if (Imgproc.contourArea(cnt) < 500) {
+                var contourArea = Imgproc.contourArea(cnt);
+                logger.info("Motion detected with contourArea {}", contourArea);
+                if (contourArea < 100_000) {
                     continue;
                 }
 
-                Imgcodecs.imwrite("/home/knovak/Pictures/opencv/detect" + curr + ".jpg", cropped);
+                Imgcodecs.imwrite("/home/knovak/Pictures/opencv/detect_" + curr + "_" + (int) contourArea + ".jpg", cropped);
                 curr++;
-                logger.info("Motion detected.");
                 Imgproc.cvtColor(cropped, lastFrame, Imgproc.COLOR_BGR2GRAY);
                 Imgproc.GaussianBlur(lastFrame, lastFrame, new Size(21, 21), 0);
                 return PeopleDetectionResult.detected(photo);
