@@ -12,7 +12,6 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.List;
 
-@Primary
 @Service
 public class PeopleDetectorMotion implements PeopleDetector {
 
