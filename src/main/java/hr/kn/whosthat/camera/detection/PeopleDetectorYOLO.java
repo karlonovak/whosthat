@@ -47,7 +47,7 @@ public class PeopleDetectorYOLO implements PeopleDetector {
             net.setInput(blob);
             net.forward(result, outBlobNames);
 
-            float confThreshold = 0.7f;
+            float confThreshold = 0.8f;
             List<Integer> classIds = new ArrayList<>();
             List<Float> confidences = new ArrayList<>();
             List<Rect> rectangles = new ArrayList<>();
@@ -79,7 +79,7 @@ public class PeopleDetectorYOLO implements PeopleDetector {
             if (classIds.contains(YOLOObjectClass.PERSON.classId)) {
                 var time = System.currentTimeMillis();
                 Imgcodecs.imwrite("/home/knovak/Pictures/opencv/detectraw_" + time + ".jpg", frame);
-                float nmsThresh = 0.7f;
+                float nmsThresh = 0.8f;
                 MatOfFloat confs = new MatOfFloat(Converters.vector_float_to_Mat(confidences));
                 Rect[] boxesArray = rectangles.toArray(new Rect[0]);
                 MatOfRect boxes = new MatOfRect(boxesArray);
