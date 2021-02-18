@@ -2,12 +2,14 @@ package hr.kn.whosthat;
 
 import hr.kn.whosthat.camera.CameraCommunicator;
 import hr.kn.whosthat.camera.cropper.PhotoCropper;
-import hr.kn.whosthat.camera.detection.PeopleDetectionResult;
 import hr.kn.whosthat.camera.detection.PeopleDetector;
 import hr.kn.whosthat.notification.TelegramService;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class DetectionScheduler {
@@ -31,13 +33,17 @@ public class DetectionScheduler {
     public void startDetector() {
         cameraCommunicator
                 .acquireCameraPhoto()
-                .map(photo -> photoCropper.removePartOfImage(photo, new Point(2560, 500), new Point(1900, 0)))
-                .doOnError(Throwable::printStackTrace)
-                .subscribe(photo -> peopleDetector
-                        .detectPeople(photo)
-                        .filter(PeopleDetectionResult::arePeopleDetected)
-                        .map(PeopleDetectionResult::getImage)
-                        .subscribe(image -> telegramService.sendPhoto(image, "Somebody's at the door!")));
+                .subscribe(photo -> {
+                    var rect1 = new Rect(new Point(2688, 480), new Point(1980, 0));
+                    var rect2 = new Rect(new Point(2688, 1520), new Point(2400, 0));
+                    var cropped = photoCropper.removePartsOfImage(photo, List.of(rect1, rect2));
+
+                    var detection = peopleDetector.detectPeople(cropped);
+                    if (detection.arePeopleDetected()) {
+                        var message = String.format("A person! %.2f%% sure.", detection.getConfidence() * 100);
+                        telegramService.sendPhoto(photo, message);
+                    }
+                });
     }
 
 //    private Long lastNotificationTime = 0L;

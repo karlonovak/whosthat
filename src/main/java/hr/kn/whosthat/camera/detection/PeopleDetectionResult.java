@@ -4,14 +4,16 @@ public class PeopleDetectionResult {
 
     private boolean peopleDetected;
     private byte[] image;
+    private float confidence;
 
     private PeopleDetectionResult() {
     }
 
-    public static PeopleDetectionResult detected(byte[] photo) {
+    public static PeopleDetectionResult detected(byte[] photo, float confidence) {
         var result = new PeopleDetectionResult();
         result.peopleDetected = true;
         result.image = photo;
+        result.confidence = confidence;
         return result;
     }
 
@@ -27,5 +29,9 @@ public class PeopleDetectionResult {
 
     public byte[] getImage() {
         return image;
+    }
+
+    public float getConfidence() {
+        return confidence;
     }
 }
