@@ -9,10 +9,10 @@ public class PeopleDetectionResult {
     private PeopleDetectionResult() {
     }
 
-    public static PeopleDetectionResult detected(byte[] photo, float confidence) {
+    public static PeopleDetectionResult detected(byte[] image, float confidence) {
         var result = new PeopleDetectionResult();
         result.peopleDetected = true;
-        result.image = photo;
+        result.image = image;
         result.confidence = confidence;
         return result;
     }

@@ -6,11 +6,9 @@ import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
 import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
 import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
-import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManager;
 import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder;
 import org.apache.hc.core5.pool.PoolReusePolicy;
 import org.apache.hc.core5.util.TimeValue;
-import org.eclipse.jetty.client.HttpClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,13 +16,17 @@ import org.springframework.http.client.reactive.HttpComponentsClientHttpConnecto
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 @Configuration
 public class HttpClientConfig {
 
     @Bean
     public WebClient cameraHttpClient(@Value("${camera.username}") String camUser,
-                                      @Value("${camera.password}") String camPassword) {
-        var httpClient = createHttpClientForCamera(camUser, camPassword);
+                                      @Value("${camera.password}") String camPassword,
+                                      @Value("${camera.address}") String camAddress) throws MalformedURLException {
+        var httpClient = createHttpClientForCamera(camUser, camPassword, camAddress);
         var clientConnector = new HttpComponentsClientHttpConnector(httpClient);
 
         return WebClient.builder()
@@ -37,8 +39,8 @@ public class HttpClientConfig {
                 .build();
     }
 
-    private CloseableHttpAsyncClient createHttpClientForCamera(String camUser, String camPassword) {
-        var provider = createCredentialsProvider(camUser, camPassword);
+    private CloseableHttpAsyncClient createHttpClientForCamera(String camUser, String camPassword, String camAddress) throws MalformedURLException {
+        var provider = createCredentialsProvider(camUser, camPassword, camAddress);
 
         var connectionManager = PoolingAsyncClientConnectionManagerBuilder.create()
                 .setConnPoolPolicy(PoolReusePolicy.LIFO)
@@ -53,10 +55,11 @@ public class HttpClientConfig {
                 .build();
     }
 
-    private CredentialsProvider createCredentialsProvider(String camUser, String camPassword) {
+    private CredentialsProvider createCredentialsProvider(String camUser, String camPassword, String camAddress) throws MalformedURLException {
+        var url = new URL(camAddress);
         var provider = new BasicCredentialsProvider();
         var credentials = new UsernamePasswordCredentials(camUser, camPassword.toCharArray());
-        provider.setCredentials(new AuthScope("192.168.6.20", 65002), credentials);
+        provider.setCredentials(new AuthScope(url.getHost(), url.getPort()), credentials);
         return provider;
     }
 

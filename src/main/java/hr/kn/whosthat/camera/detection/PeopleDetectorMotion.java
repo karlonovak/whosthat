@@ -5,8 +5,8 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +15,12 @@ import java.util.List;
 public class PeopleDetectorMotion implements PeopleDetector {
 
     private final Logger logger = LoggerFactory.getLogger(PeopleDetectorMotion.class);
+
+    private final String workDir;
+
+    public PeopleDetectorMotion(@Value("${app.work.dir}") String workDir) {
+        this.workDir = workDir;
+    }
 
     private Mat frame = new Mat();
     private Mat lastFrame = new Mat();
@@ -29,7 +35,7 @@ public class PeopleDetectorMotion implements PeopleDetector {
         frame = Imgcodecs.imdecode(new MatOfByte(photo), Imgcodecs.IMREAD_COLOR);
         var roi = new Rect(1000, 15, 920, 1500);
         var cropped = new Mat(frame, roi);
-        Imgcodecs.imwrite("/home/knovak/Pictures/opencv/last.jpg", cropped);
+        Imgcodecs.imwrite(workDir + "/last.jpg", cropped);
 
         if (curr == 0) {
             Imgproc.cvtColor(cropped, lastFrame, Imgproc.COLOR_BGR2GRAY);
@@ -51,12 +57,12 @@ public class PeopleDetectorMotion implements PeopleDetector {
 
         for (MatOfPoint cnt : cnts) {
             var contourArea = Imgproc.contourArea(cnt);
-            logger.info("Motion detected with contourArea {}", contourArea);
+            logger.debug("Motion detected with contourArea {}", contourArea);
             if (contourArea < 100_000) {
                 continue;
             }
 
-            Imgcodecs.imwrite("/home/knovak/Pictures/opencv/detect_" + curr + "_" + (int) contourArea + ".jpg", cropped);
+            Imgcodecs.imwrite(workDir + "/detect_" + curr + "_" + (int) contourArea + ".jpg", cropped);
             curr++;
             Imgproc.cvtColor(cropped, lastFrame, Imgproc.COLOR_BGR2GRAY);
             Imgproc.GaussianBlur(lastFrame, lastFrame, new Size(21, 21), 0);
