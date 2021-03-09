@@ -52,7 +52,7 @@ public class PeopleDetectorYOLO implements PeopleDetector {
         net.setInput(blob);
         net.forward(result, outBlobNames);
 
-        float confThreshold = 0.8f;
+        float confThreshold = 0.85f;
         List<Integer> classIds = new ArrayList<>();
         List<Float> confidences = new ArrayList<>();
         List<Rect> rectangles = new ArrayList<>();
@@ -82,7 +82,7 @@ public class PeopleDetectorYOLO implements PeopleDetector {
 
         if (classIds.contains(YOLOObjectClass.PERSON.classId)) {
             logger.info("Person detected!");
-            float nmsThresh = 0.8f;
+            float nmsThresh = 0.85f;
             MatOfFloat confs = new MatOfFloat(Converters.vector_float_to_Mat(confidences));
             Rect[] boxesArray = rectangles.toArray(new Rect[0]);
             MatOfRect boxes = new MatOfRect(boxesArray);

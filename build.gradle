@@ -1,8 +1,19 @@
+buildscript {
+    ext {
+        palantirGradleDockerVersion = '0.19.2'
+    }
+    dependencies {
+        classpath("gradle.plugin.com.palantir.gradle.docker:gradle-docker:${palantirGradleDockerVersion}")
+    }
+}
+
 plugins {
     id 'org.springframework.boot' version '2.4.2'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'java'
 }
+
+apply plugin: 'com.palantir.docker'
 
 group = 'hr.kn'
 version = '0.0.1-SNAPSHOT'
@@ -50,3 +61,12 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+docker {
+    name "${project.name}"
+    tags "latest"
+    files jar.archivePath
+    buildArgs(['JAR_FILE': "${jar.archiveName}"])
+}
+
+docker.dependsOn build
