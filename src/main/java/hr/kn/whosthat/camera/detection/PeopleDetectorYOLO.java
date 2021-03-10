@@ -24,14 +24,11 @@ public class PeopleDetectorYOLO implements PeopleDetector {
 
     private final Net net;
     private final List<String> outBlobNames;
-    private final String workDir;
 
     public PeopleDetectorYOLO(@Value("${yolo.weights}") String yoloWeights,
-                              @Value("${yolo.config}") String yoloConfig,
-                              @Value("${app.work.dir}") String workDir) {
+                              @Value("${yolo.config}") String yoloConfig) {
         this.net = Dnn.readNetFromDarknet(yoloConfig, yoloWeights);
         this.outBlobNames = getOutputNames(net);
-        this.workDir = workDir;
     }
 
     private static List<String> getOutputNames(Net net) {
@@ -97,7 +94,6 @@ public class PeopleDetectorYOLO implements PeopleDetector {
                 Imgproc.rectangle(frame, box.tl(), box.br(), new Scalar(0, 0, 255), 2);
 
             }
-            Imgcodecs.imwrite(workDir + "/detect_" + System.currentTimeMillis() + ".jpg", frame);
             return PeopleDetectionResult.detected(photo, Collections.max(confidences));
         }
 
