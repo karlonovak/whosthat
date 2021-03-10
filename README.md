@@ -1,6 +1,9 @@
 ## About The Project
 whosthat is app for detecting people on CCTV/cameras and sending notifications with photo snapshots using Telegram bot.
 
+## whosthat in action
+This is what it looks like on my phone in action. Never misses a single person, not even in infrared mode (during night time) :)
+![alt text](whosthat.jpg "whosthat in action on my phone")
 ### Built With
 * Java 14
 * Spring Boot 2.4.2
