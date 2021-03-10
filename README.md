@@ -4,6 +4,8 @@ whosthat is app for detecting people on CCTV/cameras and sending notifications w
 ### Built With
 * Java 14
 * Spring Boot 2.4.2
+* OpenCV 4.2.0-0
+* darknet/yolo
 
 ### Tested with
 * Docker 20.10.5
