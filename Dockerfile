@@ -1,4 +1,4 @@
-FROM openjdk:11.0.2-jre-slim-stretch
+FROM openjdk:17.0.1-slim-buster
 
 WORKDIR /opt
 VOLUME /tmp
@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y git
 RUN apt-get update && apt-get install -y wget
 
 RUN git clone https://github.com/pjreddie/darknet.git
-RUN cd darknet && wget https://pjreddie.com/media/files/yolov3.weights
+RUN cd darknet && wget https://media.githubusercontent.com/media/patrick013/Object-Detection---Yolov3/master/model/yolov3.weights
 
 ENTRYPOINT java $JAVA_OPTS \
     -Djava.net.preferIPv4Stack=true \
