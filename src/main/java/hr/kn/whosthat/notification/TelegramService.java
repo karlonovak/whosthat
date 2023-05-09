@@ -31,7 +31,7 @@ public class TelegramService {
             logger.info("Notifying user via Telegram");
             var sendPhotoRequest = new SendPhoto(chatId, photo).caption(caption);
             telegramBot.execute(sendPhotoRequest);
-            lastNotificationTime = System.currentTimeMillis();
+       g     lastNotificationTime = System.currentTimeMillis();
         }
     }
 

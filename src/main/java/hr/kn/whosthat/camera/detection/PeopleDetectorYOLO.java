@@ -42,6 +42,7 @@ public class PeopleDetectorYOLO implements PeopleDetector {
 
     @Override
     public PeopleDetectionResult detectPeople(byte[] photo) {
+        logger.info("running detection on image of size {}", photo.length);
         var frame = Imgcodecs.imdecode(new MatOfByte(photo), Imgcodecs.IMREAD_COLOR);
         var blob = Dnn.blobFromImage(frame, 0.00392, new Size(608, 608), new Scalar(0), true, false);
 
@@ -52,7 +53,7 @@ public class PeopleDetectorYOLO implements PeopleDetector {
         float confThreshold = 0.85f;
         List<Integer> classIds = new ArrayList<>();
         List<Float> confidences = new ArrayList<>();
-        List<Rect> rectangles = new ArrayList<>();
+        List<Rect2d> rectangles = new ArrayList<>();
         for (Mat level : result) {
             // each row is a candidate detection, the 1st 4 numbers are
             // [center_x, center_y, width, height], followed by (N-4) class probabilities
@@ -72,7 +73,7 @@ public class PeopleDetectorYOLO implements PeopleDetector {
 
                     classIds.add((int) classIdPoint.x);
                     confidences.add(confidence);
-                    rectangles.add(new Rect(left, top, width, height));
+                    rectangles.add(new Rect2d(left, top, width, height));
                 }
             }
         }
@@ -81,8 +82,8 @@ public class PeopleDetectorYOLO implements PeopleDetector {
             logger.info("Person detected!");
             float nmsThresh = 0.85f;
             MatOfFloat confs = new MatOfFloat(Converters.vector_float_to_Mat(confidences));
-            Rect[] boxesArray = rectangles.toArray(new Rect[0]);
-            MatOfRect boxes = new MatOfRect(boxesArray);
+            Rect2d[] boxesArray = rectangles.toArray(new Rect2d[0]);
+            MatOfRect2d boxes = new MatOfRect2d(boxesArray);
             MatOfInt indices = new MatOfInt();
             Dnn.NMSBoxes(boxes, confs, confThreshold, nmsThresh, indices); // We draw the bounding boxes for objects here
 
@@ -90,7 +91,7 @@ public class PeopleDetectorYOLO implements PeopleDetector {
             for (int i = 0; i < ind.length; ++i) {
                 logger.debug("Confidence is " + confidences.get(i) + " and class is " + classIds.get(i));
                 int idx = ind[i];
-                Rect box = boxesArray[idx];
+                Rect2d box = boxesArray[idx];
                 Imgproc.rectangle(frame, box.tl(), box.br(), new Scalar(0, 0, 255), 2);
 
             }

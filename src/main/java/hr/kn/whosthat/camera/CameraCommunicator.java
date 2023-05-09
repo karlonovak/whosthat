@@ -19,11 +19,12 @@ public class CameraCommunicator {
         this.cameraHttpClient = cameraHttpClient;
     }
 
-    public Mono<byte[]> acquireCameraPhoto() {
+    public byte[] acquireCameraPhoto() {
         return cameraHttpClient.get()
                 .uri(cameraAddress)
                 .retrieve()
-                .bodyToMono(byte[].class);
+                .bodyToMono(byte[].class)
+                .block();
     }
 
     public Flux<String> acquireCameraMotions() {
