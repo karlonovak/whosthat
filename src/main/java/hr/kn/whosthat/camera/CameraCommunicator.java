@@ -11,28 +11,31 @@ import reactor.core.publisher.Mono;
 public class CameraCommunicator {
 
     private final String cameraAddress;
+    private final String motionAddress;
     private final WebClient cameraHttpClient;
-    private static final String CAMERA_MOTION = "http://192.168.6.20:65002/ISAPI/Event/notification/alertStream";
 
-    public CameraCommunicator(WebClient cameraHttpClient, @Value("${camera.address}") String cameraAddress) {
+    public CameraCommunicator(WebClient cameraHttpClient,
+                              @Value("${camera.address}") String cameraAddress,
+                              @Value("${MOTION_ADDRESS}") String motionAddress) {
         this.cameraAddress = cameraAddress;
+        this.motionAddress = motionAddress;
         this.cameraHttpClient = cameraHttpClient;
     }
 
     public byte[] acquireCameraPhoto() {
         return cameraHttpClient.get()
-                .uri(cameraAddress)
-                .retrieve()
-                .bodyToMono(byte[].class)
-                .block();
+            .uri(cameraAddress)
+            .retrieve()
+            .bodyToMono(byte[].class)
+            .block();
     }
 
     public Flux<String> acquireCameraMotions() {
         return cameraHttpClient.get()
-                .uri(CAMERA_MOTION)
-                .accept(MediaType.TEXT_EVENT_STREAM)
-                .retrieve()
-                .bodyToFlux(String.class);
+            .uri(motionAddress)
+            .accept(MediaType.TEXT_EVENT_STREAM)
+            .retrieve()
+            .bodyToFlux(String.class);
     }
 
 }
