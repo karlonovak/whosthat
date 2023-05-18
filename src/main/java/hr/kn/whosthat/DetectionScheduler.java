@@ -55,12 +55,12 @@ public class DetectionScheduler {
             .acquireCameraMotions()
             .subscribeOn(Schedulers.fromExecutor(Executors.newSingleThreadExecutor()))
             .doOnError(Throwable::printStackTrace)
-//            .doOnCancel(() -> {
-//                System.out.println("canceled");
-//            })
-//            .doOnComplete(() -> {
-//                System.out.println("complete");
-//            })
+            .doOnCancel(() -> {
+                logger.info("Motion stream canceled...");
+            })
+            .doOnComplete(() -> {
+                logger.info("Motion stream completed...");
+            })
             .doOnTerminate(() -> {
                 logger.info("Motion stream terminated...");
                 startMotionObserver();
