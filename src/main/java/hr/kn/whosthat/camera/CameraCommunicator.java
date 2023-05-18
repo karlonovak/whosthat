@@ -11,15 +11,19 @@ import reactor.core.publisher.Mono;
 public class CameraCommunicator {
 
     private final String cameraAddress;
-    private final String motionAddress;
     private final WebClient cameraHttpClient;
 
+    private final String motionAddress;
+    private final WebClient motionHttpClient;
+
     public CameraCommunicator(WebClient cameraHttpClient,
+                              WebClient motionHttpClient,
                               @Value("${camera.address}") String cameraAddress,
                               @Value("${MOTION_ADDRESS}") String motionAddress) {
         this.cameraAddress = cameraAddress;
         this.motionAddress = motionAddress;
         this.cameraHttpClient = cameraHttpClient;
+        this.motionHttpClient = motionHttpClient;
     }
 
     public byte[] acquireCameraPhoto() {
@@ -31,7 +35,7 @@ public class CameraCommunicator {
     }
 
     public Flux<String> acquireCameraMotions() {
-        return cameraHttpClient.get()
+        return motionHttpClient.get()
             .uri(motionAddress)
             .accept(MediaType.TEXT_EVENT_STREAM)
             .retrieve()

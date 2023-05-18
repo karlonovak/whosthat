@@ -90,7 +90,7 @@ public class DetectionScheduler {
                 var message = String.format("A person! %.2f%% sure.", detection.getConfidence() * 100);
                 telegramService.sendPhoto(camSnap, message);
             }
-            System.gc();
+//            System.gc();
         } catch (Exception e) {
             e.printStackTrace();
         }

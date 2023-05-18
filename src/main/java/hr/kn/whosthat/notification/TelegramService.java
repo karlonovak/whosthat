@@ -30,7 +30,7 @@ public class TelegramService {
         if (minutePassedSinceLastNotification()) {
             logger.info("Notifying user via Telegram");
             var sendPhotoRequest = new SendPhoto(chatId, photo).caption(caption);
-            telegramBot.execute(sendPhotoRequest);
+//            telegramBot.execute(sendPhotoRequest);
             lastNotificationTime = System.currentTimeMillis();
         }
     }

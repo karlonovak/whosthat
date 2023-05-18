@@ -39,6 +39,23 @@ public class HttpClientConfig {
                 .build();
     }
 
+    @Bean
+    public WebClient motionHttpClient(@Value("${camera.username}") String camUser,
+                                      @Value("${camera.password}") String camPassword,
+                                      @Value("${camera.address}") String camAddress) throws MalformedURLException {
+        var httpClient = createHttpClientForCamera(camUser, camPassword, camAddress);
+        var clientConnector = new HttpComponentsClientHttpConnector(httpClient);
+
+        return WebClient.builder()
+            .clientConnector(clientConnector)
+            .exchangeStrategies(ExchangeStrategies.builder()
+                .codecs(configurer -> configurer
+                    .defaultCodecs()
+                    .maxInMemorySize(16 * 1024 * 1024))
+                .build())
+            .build();
+    }
+
     private CloseableHttpAsyncClient createHttpClientForCamera(String camUser, String camPassword, String camAddress) throws MalformedURLException {
         var provider = createCredentialsProvider(camUser, camPassword, camAddress);
 
