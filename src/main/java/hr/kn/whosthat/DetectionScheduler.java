@@ -8,9 +8,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import reactor.core.scheduler.Schedulers;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 @Component
@@ -23,7 +27,8 @@ public class DetectionScheduler {
 
     private final Logger logger = LoggerFactory.getLogger(DetectionScheduler.class);
 
-    private Long motionThresh = 0L;
+    private AtomicLong motionThresh = new AtomicLong(0L);
+    private final Executor snapPool = Executors.newSingleThreadExecutor();
 
     public DetectionScheduler(CameraCommunicator cameraCommunicator,
                               TelegramService telegramService,
@@ -61,12 +66,13 @@ public class DetectionScheduler {
                 startMotionObserver();
             })
             .filter(line -> line.contains("VMD"))
+            .subscribeOn(Schedulers.fromExecutor(Executors.newSingleThreadExecutor()))
             .subscribe(motionEvent -> {
                 var now = System.currentTimeMillis();
-                if (now - motionThresh > 3000) {
-                    processSnap();
+                if (now - motionThresh.get() > 3000) {
+                    snapPool.execute(this::processSnap);
                 }
-                motionThresh = now;
+                motionThresh.set(now);
             });
 //            .subscribe(logger::info);
     }
