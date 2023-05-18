@@ -16,10 +16,10 @@ public class DumpController {
     @ResponseBody
     public void processEvent(HttpEntity<String> httpEntity) {
         if (httpEntity.getBody() != null && httpEntity.getBody().contains("Motion alarm")) {
-            logger.info("process motion");
+            logger.debug("process motion");
 
         } else {
-            logger.info("UNKNOWN event");
+            logger.debug("UNKNOWN event");
         }
 //        if (httpEntity.getBody() != null && httpEntity.getBody().contains("fielddetection")) {
 //            ftpClient.listFiles("")

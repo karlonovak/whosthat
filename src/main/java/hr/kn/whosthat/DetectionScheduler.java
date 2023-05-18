@@ -27,8 +27,7 @@ public class DetectionScheduler {
 
     private final Logger logger = LoggerFactory.getLogger(DetectionScheduler.class);
 
-    private AtomicLong motionThresh = new AtomicLong(0L);
-    private final Executor snapPool = Executors.newSingleThreadExecutor();
+    private final AtomicLong motionThresh = new AtomicLong(0L);
 
     public DetectionScheduler(CameraCommunicator cameraCommunicator,
                               TelegramService telegramService,
@@ -54,6 +53,7 @@ public class DetectionScheduler {
         logger.info("Starting observer in motion mode...");
         cameraCommunicator
             .acquireCameraMotions()
+            .subscribeOn(Schedulers.fromExecutor(Executors.newSingleThreadExecutor()))
             .doOnError(Throwable::printStackTrace)
 //            .doOnCancel(() -> {
 //                System.out.println("canceled");
@@ -66,15 +66,14 @@ public class DetectionScheduler {
                 startMotionObserver();
             })
             .filter(line -> line.contains("VMD"))
+            .map(m -> System.currentTimeMillis())
             .subscribeOn(Schedulers.fromExecutor(Executors.newSingleThreadExecutor()))
-            .subscribe(motionEvent -> {
-                var now = System.currentTimeMillis();
-                if (now - motionThresh.get() > 3000) {
-                    snapPool.execute(this::processSnap);
+            .subscribe(timestamp -> {
+                if (timestamp - motionThresh.get() > 3000) {
+                    motionThresh.set(timestamp);
+                    processSnap();
                 }
-                motionThresh.set(now);
             });
-//            .subscribe(logger::info);
     }
 
     public void processSnap() {
