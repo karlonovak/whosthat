@@ -41,7 +41,7 @@ public class DetectionScheduler {
         this.photoCropper = photoCropper;
 
         if ("motion".equals(triggerType)) {
-            startMotionObserver();
+            startMotionObserver(camFrequency);
         } else {
             logger.info("Starting observer in scheduled mode...");
             new ScheduledThreadPoolExecutor(1).scheduleAtFixedRate(
@@ -49,7 +49,7 @@ public class DetectionScheduler {
         }
     }
 
-    private void startMotionObserver() {
+    private void startMotionObserver(Integer camFrequency) {
         logger.info("Starting observer in motion mode...");
         cameraCommunicator
             .acquireCameraMotions()
@@ -63,13 +63,13 @@ public class DetectionScheduler {
             })
             .doOnTerminate(() -> {
                 logger.info("Motion stream terminated...");
-                startMotionObserver();
+                startMotionObserver(camFrequency);
             })
             .filter(line -> line.contains("VMD"))
             .map(m -> System.currentTimeMillis())
             .subscribeOn(Schedulers.fromExecutor(Executors.newSingleThreadExecutor()))
             .subscribe(timestamp -> {
-                if (timestamp - motionThresh.get() > 3000) {
+                if (timestamp - motionThresh.get() > (camFrequency * 1000)) {
                     motionThresh.set(timestamp);
                     processSnap();
                 }
