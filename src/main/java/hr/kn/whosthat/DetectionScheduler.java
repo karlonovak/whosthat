@@ -10,12 +10,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.scheduler.Schedulers;
 
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 
 @Component
 public class DetectionScheduler {
@@ -45,7 +43,7 @@ public class DetectionScheduler {
         } else {
             logger.info("Starting observer in scheduled mode...");
             new ScheduledThreadPoolExecutor(1).scheduleAtFixedRate(
-                this::processSnap, 0, camFrequency, TimeUnit.SECONDS);
+                this::executeDetection, 0, camFrequency, TimeUnit.SECONDS);
         }
     }
 
@@ -55,12 +53,8 @@ public class DetectionScheduler {
             .acquireCameraMotions()
             .subscribeOn(Schedulers.fromExecutor(Executors.newSingleThreadExecutor()))
             .doOnError(Throwable::printStackTrace)
-            .doOnCancel(() -> {
-                logger.info("Motion stream canceled...");
-            })
-            .doOnComplete(() -> {
-                logger.info("Motion stream completed...");
-            })
+            .doOnCancel(() -> logger.info("Motion stream canceled..."))
+            .doOnComplete(() -> logger.info("Motion stream completed..."))
             .doOnTerminate(() -> {
                 logger.info("Motion stream terminated...");
                 startMotionObserver(camFrequency);
@@ -70,13 +64,16 @@ public class DetectionScheduler {
             .subscribeOn(Schedulers.fromExecutor(Executors.newSingleThreadExecutor()))
             .subscribe(timestamp -> {
                 if (timestamp - motionThresh.get() > (camFrequency * 1000)) {
-                    motionThresh.set(timestamp);
-                    processSnap();
+                    if (executeDetection()) { // detection delays next detection for 60 seconds
+                        motionThresh.set(timestamp + 60_000);
+                    } else {
+                        motionThresh.set(timestamp);
+                    }
                 }
             });
     }
 
-    public void processSnap() {
+    public boolean executeDetection() {
         try {
             var start = System.currentTimeMillis();
             byte[] camSnap = cameraCommunicator.acquireCameraPhoto();
@@ -86,14 +83,18 @@ public class DetectionScheduler {
             logger.info("Cropping done");
             var detection = peopleDetector.detectPeople(croppedSnap);
             logger.info("Processing took {}ms", System.currentTimeMillis() - start);
+
+            //            System.gc();
+
             if (detection.arePeopleDetected()) {
                 var message = String.format("A person! %.2f%% sure.", detection.getConfidence() * 100);
                 telegramService.sendPhoto(camSnap, message);
+                return true;
             }
-//            System.gc();
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return false;
     }
 
 }
