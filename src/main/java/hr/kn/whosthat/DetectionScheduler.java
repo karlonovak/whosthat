@@ -84,7 +84,7 @@ public class DetectionScheduler {
             var detection = peopleDetector.detectPeople(croppedSnap);
             logger.info("Processing took {}ms", System.currentTimeMillis() - start);
 
-            //            System.gc();
+            System.gc();
 
             if (detection.arePeopleDetected()) {
                 var message = String.format("A person! %.2f%% sure.", detection.getConfidence() * 100);
