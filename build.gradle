@@ -69,8 +69,8 @@ test {
 
 bootBuildImage {
     imageName = "${project.group}/${project.name}:${project.version}"
-    builder = "paketobuildpacks/builder:full"   // 'full' avoids analyzer issues
-    runImage = "paketobuildpacks/run:full-cnb" // match full builder
+    builder = "paketobuildpacks/builder-jammy-full"   // 'full' avoids analyzer issues
+    runImage = "paketobuildpacks/builder-jammy-full" // match full builder
     environment = [
             BP_JVM_VERSION: "21",
     ]
