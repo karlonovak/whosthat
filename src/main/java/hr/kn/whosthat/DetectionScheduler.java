@@ -43,34 +43,34 @@ public class DetectionScheduler {
         } else {
             logger.info("Starting observer in scheduled mode...");
             new ScheduledThreadPoolExecutor(1).scheduleAtFixedRate(
-                this::executeDetection, 0, camFrequency, TimeUnit.SECONDS);
+                    this::executeDetection, 0, camFrequency, TimeUnit.SECONDS);
         }
     }
 
     private void startMotionObserver(Integer camFrequency) {
         logger.info("Starting observer in motion mode...");
         cameraCommunicator
-            .acquireCameraMotions()
-            .subscribeOn(Schedulers.fromExecutor(Executors.newSingleThreadExecutor()))
-            .doOnError(Throwable::printStackTrace)
-            .doOnCancel(() -> logger.info("Motion stream canceled..."))
-            .doOnComplete(() -> logger.info("Motion stream completed..."))
-            .doOnTerminate(() -> {
-                logger.info("Motion stream terminated...");
-                startMotionObserver(camFrequency);
-            })
-            .filter(line -> line.contains("VMD"))
-            .map(m -> System.currentTimeMillis())
-            .subscribeOn(Schedulers.fromExecutor(Executors.newSingleThreadExecutor()))
-            .subscribe(timestamp -> {
-                if (timestamp - motionThresh.get() > (camFrequency * 1000)) {
-                    if (executeDetection()) { // detection delays next detection for 60 seconds
-                        motionThresh.set(timestamp + 60_000);
-                    } else {
-                        motionThresh.set(timestamp);
+                .acquireCameraMotions()
+                .subscribeOn(Schedulers.fromExecutor(Executors.newSingleThreadExecutor()))
+                .doOnError(Throwable::printStackTrace)
+                .doOnCancel(() -> logger.info("Motion stream canceled..."))
+                .doOnComplete(() -> logger.info("Motion stream completed..."))
+                .doOnTerminate(() -> {
+                    logger.info("Motion stream terminated...");
+                    startMotionObserver(camFrequency);
+                })
+                .filter(line -> line.contains("VMD"))
+                .map(m -> System.currentTimeMillis())
+                .subscribeOn(Schedulers.fromExecutor(Executors.newSingleThreadExecutor()))
+                .subscribe(timestamp -> {
+                    if (timestamp - motionThresh.get() > (camFrequency * 1000)) {
+                        if (executeDetection()) { // detection delays next detection for 60 seconds
+                            motionThresh.set(timestamp + 60_000);
+                        } else {
+                            motionThresh.set(timestamp);
+                        }
                     }
-                }
-            });
+                });
     }
 
     public boolean executeDetection() {
@@ -78,10 +78,10 @@ public class DetectionScheduler {
             var start = System.currentTimeMillis();
             byte[] camSnap = cameraCommunicator.acquireCameraPhoto();
             logger.info("Image size in bytes is {}", camSnap.length);
-//            logger.info("Cropping in progress..");
-//            var croppedSnap = photoCropper.removePartsOfImage(camSnap);
+            logger.info("Cropping in progress..");
+            var croppedSnap = photoCropper.removePartsOfImage(camSnap);
             logger.info("Cropping done");
-            var detection = peopleDetector.detectPeople(camSnap);
+            var detection = peopleDetector.detectPeople(croppedSnap);
             logger.info("Processing took {}ms", System.currentTimeMillis() - start);
 
             System.gc();

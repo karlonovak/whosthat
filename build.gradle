@@ -33,29 +33,13 @@ repositories {
 }
 
 dependencies {
+    // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.38'
     annotationProcessor 'org.projectlombok:lombok:1.18.38'
 
+    // Spring
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
-    implementation 'com.github.pengrad:java-telegram-bot-api:5.0.0'
-    implementation 'org.eclipse.jetty:jetty-reactive-httpclient:1.1.4'
-    implementation 'org.openpnp:opencv:4.7.0-0'
-    implementation 'info.picocli:picocli:4.1.0'
-    implementation 'org.scijava:native-lib-loader:2.3.1'
-    implementation 'org.apache.httpcomponents.client5:httpclient5:5.3.1'
-    implementation 'org.apache.httpcomponents.core5:httpcore5-reactive:5.3.1'
-    implementation 'org.apache.httpcomponents.core5:httpcore5:5.3.1'
-    implementation 'io.github.rburgst:okhttp-digest:3.0.1'
-
-    // DJL for YOLOv8
-    implementation("ai.djl:api:0.36.0")
-    implementation("ai.djl.pytorch:pytorch-engine:0.36.0")
-
-    runtimeOnly "ai.djl.pytorch:pytorch-native-cpu:2.7.1:osx-aarch64"
-    runtimeOnly "ai.djl.pytorch:pytorch-native-cpu:2.7.1:linux-x86_64"
-
-    runtimeOnly "ai.djl.pytorch:pytorch-jni:2.7.1-0.36.0"
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
@@ -63,8 +47,31 @@ dependencies {
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
+
+    // Telegram
+    implementation 'com.github.pengrad:java-telegram-bot-api:9.5.0'
+
+    // HTTP client
+    implementation 'org.apache.httpcomponents.client5:httpclient5:5.3.1'
+    implementation 'org.apache.httpcomponents.core5:httpcore5-reactive:5.3.1'
+    implementation 'org.apache.httpcomponents.core5:httpcore5:5.3.1'
+
+    // DJL for YOLOv8
+    implementation("ai.djl:api:0.36.0")
+    implementation("ai.djl.pytorch:pytorch-engine:0.36.0")
+    runtimeOnly "ai.djl.pytorch:pytorch-native-cpu:2.7.1:osx-aarch64"
+    runtimeOnly "ai.djl.pytorch:pytorch-native-cpu:2.7.1:linux-x86_64"
+    runtimeOnly "ai.djl.pytorch:pytorch-jni:2.7.1-0.36.0"
 }
 
 test {
     useJUnitPlatform()
+}
+
+bootBuildImage {
+    imageName = "${project.group}/${project.name}:${project.version}"
+    builder = "paketobuildpacks/builder:tiny" // small image
+    environment = [
+            BP_JVM_VERSION: '21',
+    ]
 }
