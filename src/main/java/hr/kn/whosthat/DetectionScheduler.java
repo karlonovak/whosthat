@@ -78,10 +78,10 @@ public class DetectionScheduler {
             var start = System.currentTimeMillis();
             byte[] camSnap = cameraCommunicator.acquireCameraPhoto();
             logger.info("Image size in bytes is {}", camSnap.length);
-            logger.info("Cropping in progress..");
-            var croppedSnap = photoCropper.removePartsOfImage(camSnap);
+//            logger.info("Cropping in progress..");
+//            var croppedSnap = photoCropper.removePartsOfImage(camSnap);
             logger.info("Cropping done");
-            var detection = peopleDetector.detectPeople(croppedSnap);
+            var detection = peopleDetector.detectPeople(camSnap);
             logger.info("Processing took {}ms", System.currentTimeMillis() - start);
 
             System.gc();

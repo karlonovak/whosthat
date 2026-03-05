@@ -1,23 +1,23 @@
-buildscript {
-    ext {
-        palantirGradleDockerVersion = '0.19.2'
-    }
-    dependencies {
-        classpath("gradle.plugin.com.palantir.gradle.docker:gradle-docker:${palantirGradleDockerVersion}")
-    }
-}
-
 plugins {
-    id 'org.springframework.boot' version '2.4.2'
-    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'org.springframework.boot' version '3.3.5'
+    id 'io.spring.dependency-management' version '1.1.6'
     id 'java'
 }
 
-apply plugin: 'com.palantir.docker'
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
 
 group = 'hr.kn'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '11'
+sourceCompatibility = '21'
+targetCompatibility = '21'
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
+}
 
 configurations {
     compileOnly {
@@ -28,31 +28,38 @@ configurations {
 repositories {
     mavenLocal()
     mavenCentral()
-    maven {
-        url "https://repo.clojars.org/"
-    }
-    maven {
-        url "https://repository.hellonico.info/repository/hellonico"
-    }
+    maven { url "https://repo.clojars.org/" }
+    maven { url "https://repository.hellonico.info/repository/hellonico" }
 }
 
 dependencies {
-    compileOnly 'org.projectlombok:lombok'
+    compileOnly 'org.projectlombok:lombok:1.18.38'
+    annotationProcessor 'org.projectlombok:lombok:1.18.38'
+
     implementation 'org.springframework.boot:spring-boot-starter'
-    implementation group: 'com.github.pengrad', name: 'java-telegram-bot-api', version: '5.0.0'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
-    implementation group: 'org.eclipse.jetty', name: 'jetty-reactive-httpclient', version: '1.1.4'
-    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
-    implementation group: 'org.openpnp', name: 'opencv', version: '4.7.0-0'
-    implementation group: 'info.picocli', name: 'picocli', version: '4.1.0'
-    implementation group: 'org.scijava', name: 'native-lib-loader', version: '2.3.1'
-    implementation group: 'org.apache.httpcomponents.client5', name: 'httpclient5', version: '5.0.3'
-    implementation group: 'org.apache.httpcomponents.core5', name: 'httpcore5-reactive', version: '5.0.3'
+    implementation 'com.github.pengrad:java-telegram-bot-api:5.0.0'
+    implementation 'org.eclipse.jetty:jetty-reactive-httpclient:1.1.4'
+    implementation 'org.openpnp:opencv:4.7.0-0'
+    implementation 'info.picocli:picocli:4.1.0'
+    implementation 'org.scijava:native-lib-loader:2.3.1'
+    implementation 'org.apache.httpcomponents.client5:httpclient5:5.3.1'
+    implementation 'org.apache.httpcomponents.core5:httpcore5-reactive:5.3.1'
+    implementation 'org.apache.httpcomponents.core5:httpcore5:5.3.1'
     implementation 'io.github.rburgst:okhttp-digest:3.0.1'
-    compileOnly 'org.projectlombok:lombok:1.18.26'
+
+    // DJL for YOLOv8
+    implementation("ai.djl:api:0.36.0")
+    implementation("ai.djl.pytorch:pytorch-engine:0.36.0")
+
+    runtimeOnly "ai.djl.pytorch:pytorch-native-cpu:2.7.1:osx-aarch64"
+    runtimeOnly "ai.djl.pytorch:pytorch-native-cpu:2.7.1:linux-x86_64"
+
+    runtimeOnly "ai.djl.pytorch:pytorch-jni:2.7.1-0.36.0"
+
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
-    annotationProcessor 'org.projectlombok:lombok'
+
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
@@ -61,12 +68,3 @@ dependencies {
 test {
     useJUnitPlatform()
 }
-
-docker {
-    name "${project.name}"
-    tags "latest"
-    files jar.archivePath
-    buildArgs(['JAR_FILE': "${jar.archiveName}"])
-}
-
-docker.dependsOn build
