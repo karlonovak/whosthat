@@ -1,0 +1,23 @@
+# whosthat: one instance per camera entrance, settings (camera, crop, Telegram) in <name>.env next to this file.
+# Memory is mostly native (OpenCV + the YOLO model, ~2.3 GB each); the Java heap itself stays small.
+x-whosthat: &whosthat
+  image: whosthat
+  pull_policy: never
+  restart: always
+  environment:
+    JAVA_OPTS: -Xmx512m
+  volumes: ["/tmp"]
+  mem_limit: 3g
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+services:
+  kuca_ulaz:
+    <<: *whosthat
+    container_name: whosthat_kuca_ulaz
+    env_file: [kuca_ulaz.env]
+  ured_ulaz:
+    <<: *whosthat
+    container_name: whosthat_ured_ulaz
+    env_file: [ured_ulaz.env]

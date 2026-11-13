@@ -35,3 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Camera settings (passwords, Telegram token) ###
+*.env
+!*.env.example

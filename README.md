@@ -51,10 +51,11 @@ To be able to run whosthat, working Docker installation and gradle should be ava
    docker images | grep whosthat
    ```
     whosthat image should be printed out.
-4. Fill in whosthat.env file with your data (see instructions below!)
+4. Copy `whosthat.env.example` to `whosthat.env` and fill in your data (see instructions below!)
 5.  ```sh
     docker run --env-file whosthat.env whosthat
     ```
+    For several cameras, see [Running several cameras](#running-several-cameras).
 6. If everything went well, success message should be shown:
     ```sh
     Started WhosThatApplication in x.xx seconds (JVM running for y.yyy)
@@ -62,8 +63,11 @@ To be able to run whosthat, working Docker installation and gradle should be ava
 
 ## Environment file
 
-whosthat comes with provided example env file, whosthat.env file inside project root.
-Environment file should be filled in with your camera's data. Available variables are:
+whosthat comes with an example env file, `whosthat.env.example`, in the project root. Copy it (one file per
+camera) and fill it in with your camera's data; real `*.env` files are git-ignored because they hold the camera
+password and the Telegram token. Besides `SERVER_PORT` (one per instance), `TRIGGER_TYPE` (`motion` reacts to the
+camera's motion events at `MOTION_ADDRESS`, anything else polls every `CAM_FREQUENCY_IN_S`) and `MOTION_ADDRESS`, the
+available variables are:
 1. [Optional] configurable log level for app, best left default
 ```sh
 LOG_LEVEL=DEBUG
@@ -100,16 +104,31 @@ YOLO_CONFIG=/opt/darknet/cfg/yolov3.cfg
 ```
 9. [Mandatory] Telegram token (https://core.telegram.org/bots#6-botfather)
 ```sh
-TELEGRAM_TOKEN=1785646214:ABHEd4GeiRNFRd_0dsvMKIgGmMVsDIBbosP
+TELEGRAM_TOKEN=123456789:AAExampleTokenFromBotFather
 ```
 10. [Mandatory] Chat ID of a group that bot should use to send detected images to 
     (https://stackoverflow.com/questions/32423837/telegram-bot-how-to-get-a-group-chat-id)
 ```sh
-TELEGRAM_CHAT_ID=-527125351
+TELEGRAM_CHAT_ID=-1001234567890
 ```
 11. [Optional] To avoid spam, declare a threshold for Telegram notifications
 ```sh
 TELEGRAM_NOTIFICATION_THRESHOLD_IN_S=60
 ```
 
+## Running several cameras
 
+`compose.yml` runs one instance per camera, each with its own env file next to it (`kuca_ulaz.env`,
+`ured_ulaz.env`), a heap cap, a memory limit and log rotation. Memory is mostly native (OpenCV and the YOLO model,
+about 2.3 GB per instance); the Java heap stays small.
+
+```sh
+docker compose up -d
+```
+
+`watchdog.sh` restarts an instance whose log has been silent for more than 5 minutes (a hung camera stream). Run it
+from cron every minute, with output to a file you can write:
+
+```sh
+* * * * * $HOME/whosthat/watchdog.sh >> $HOME/whosthat-watchdog.log 2>&1
+```
