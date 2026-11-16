@@ -7,6 +7,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
+
 @Service
 public class CameraCommunicator {
 
@@ -31,7 +33,8 @@ public class CameraCommunicator {
             .uri(cameraAddress)
             .retrieve()
             .bodyToMono(byte[].class)
-            .block();
+            // without a limit a camera that stops answering blocks the motion thread for good
+            .block(Duration.ofSeconds(20));
     }
 
     public Flux<String> acquireCameraMotions() {

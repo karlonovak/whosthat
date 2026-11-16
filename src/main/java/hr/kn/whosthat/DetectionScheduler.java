@@ -10,7 +10,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.scheduler.Schedulers;
 
+import java.time.Duration;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -27,6 +29,12 @@ public class DetectionScheduler {
 
     private final AtomicLong motionThresh = new AtomicLong(0L);
 
+    // The camera sends a heartbeat (videoloss/inactive) every few seconds, motion or not, so a minute without any
+    // line means the connection hangs without closing; nothing else would ever end the stream.
+    private static final Duration STREAM_IDLE_TIMEOUT = Duration.ofSeconds(60);
+    private final AtomicLong streamEvents = new AtomicLong(0L);
+    private final ScheduledExecutorService housekeeping = Executors.newSingleThreadScheduledExecutor();
+
     public DetectionScheduler(CameraCommunicator cameraCommunicator,
                               TelegramService telegramService,
                               PeopleDetector peopleDetector,
@@ -40,6 +48,10 @@ public class DetectionScheduler {
 
         if ("motion".equals(triggerType)) {
             startMotionObserver(camFrequency);
+            // One line a minute even without motion, so a silent log really means a stuck app (watchdog, Grafana).
+            housekeeping.scheduleAtFixedRate(
+                    () -> logger.info("Motion stream alive: {} events in the last minute", streamEvents.getAndSet(0)),
+                    1, 1, TimeUnit.MINUTES);
         } else {
             logger.info("Starting observer in scheduled mode...");
             new ScheduledThreadPoolExecutor(1).scheduleAtFixedRate(
@@ -51,13 +63,15 @@ public class DetectionScheduler {
         logger.info("Starting observer in motion mode...");
         cameraCommunicator
                 .acquireCameraMotions()
+                .doOnNext(line -> streamEvents.incrementAndGet())
+                .timeout(STREAM_IDLE_TIMEOUT)
                 .subscribeOn(Schedulers.fromExecutor(Executors.newSingleThreadExecutor()))
                 .doOnError(Throwable::printStackTrace)
                 .doOnCancel(() -> logger.info("Motion stream canceled..."))
                 .doOnComplete(() -> logger.info("Motion stream completed..."))
                 .doOnTerminate(() -> {
-                    logger.info("Motion stream terminated...");
-                    startMotionObserver(camFrequency);
+                    logger.info("Motion stream terminated, reconnecting in 5s...");
+                    housekeeping.schedule(() -> startMotionObserver(camFrequency), 5, TimeUnit.SECONDS);
                 })
                 .filter(line -> line.contains("VMD"))
                 .map(m -> System.currentTimeMillis())

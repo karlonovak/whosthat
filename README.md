@@ -126,7 +126,10 @@ about 2.3 GB per instance); the Java heap stays small.
 docker compose up -d
 ```
 
-`watchdog.sh` restarts an instance whose log has been silent for more than 5 minutes (a hung camera stream). Run it
+whosthat reconnects on its own when the motion stream ends, fails or stays silent for 60 seconds (the camera sends a
+heartbeat every few seconds, so silence means a connection that hangs without closing). It also logs
+`Motion stream alive: N events in the last minute` every minute, motion or not. That makes a silent log a reliable
+sign of a stuck app: `watchdog.sh` restarts an instance whose log has been silent for more than 5 minutes. Run it
 from cron every minute, with output to a file you can write:
 
 ```sh

@@ -1,7 +1,7 @@
 # whosthat: one instance per camera entrance, settings (camera, crop, Telegram) in <name>.env next to this file.
 # Memory is mostly native (OpenCV + the YOLO model, ~2.3 GB each); the Java heap itself stays small.
 x-whosthat: &whosthat
-  image: whosthat
+  image: whosthat:2023-06-stream-timeout
   pull_policy: never
   restart: always
   environment:
